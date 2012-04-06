@@ -1,0 +1,142 @@
+\documentclass[11pt]{amsart}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb, amsmath}
+\usepackage{esint}
+\usepackage{epstopdf}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{Notes on simulating Maxwell's equations}
+\author{John Shumway}
+%\date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+\section{Introduction}
+
+Maxwell's equations are: Gauss's law,
+\begin{equation}
+% {{oiint|intsubscpt=<math>\scriptstyle\partial V</math> |integrand=<math>
+\varoiint
+\mathbf{E}\cdot\mathrm{d}\mathbf{A} 
+= \frac{Q(V)}{\varepsilon_0},
+ \end{equation}
+ Gauss's law for magnetism,
+ \begin{equation}
+\varoiint
+\mathbf{B}\cdot\mathrm{d}\mathbf{A} = 0,
+\end{equation}
+Maxwell--Faraday equation (Faraday's law of induction),
+\begin{equation}
+\oint_{\partial S} 
+\mathbf{E} \cdot \mathrm{d}\mathbf{l}  = - \frac {\partial \Phi_S{(\mathbf B)}}{\partial t}.
+\end{equation}
+and Amp\`ere's circuital law (with Maxwell's correction),
+\begin{equation}
+\oint_{\partial S} \mathbf{B} \cdot \mathrm{d}\mathbf{l} 
+= \mu_0 I_S + \mu_0 \varepsilon_0 \frac {\partial \Phi_S{(\mathbf E)}}{\partial t}.
+\end{equation}
+
+The first two laws relate fields to the sources (charges), and once they are
+satisfied, the dynamics causes them to always be satisfied.
+The last two laws can be rewritten to look more like equations of motion,
+Faraday's law of induction tells us how magnetic fields change,
+\begin{equation}
+\frac {\partial}{\partial t} \Phi_S(\mathbf B) =
+-\oint_{\partial S} 
+\mathbf{E} \cdot \mathrm{d}\mathbf{l}.
+\end{equation}
+and Amp\`ere's circuital law with Maxwell's correction tells us how electric fields
+change,
+\begin{equation}
+\frac {\partial \Phi_S{(\mathbf E)}}{\partial t} 
+=
+\frac{1}{ \mu_0 \varepsilon_0} \oint_{\partial S} \mathbf{B} \cdot \mathrm{d}\mathbf{l} 
+- \frac{I_S}{\varepsilon_0}.
+\end{equation}
+
+\section{Discretizing the fields and sources}
+We construct a three dimensional grid of cubes. The comments of
+the electric fields, ($E_x$, $E_y$, and $E_z$),
+live on the edges of the cubes.
+Charge densities ($\rho$) live on the vertices of the cubes, and current densities
+($J_x$, $J_y$, and $J_z$)
+live on the edges of the cubes.
+
+We construct a second three-dimensional grid of cubes, this one shifted
+so that the cubes of the second grid are centered on the vertices of the
+first grid.
+The components of the magnetic field ($B_x$, $B_y$, and $B_z$) live
+ on the edges of the second grid.
+ 
+ Denote the edge length of the grids by $a$, so that the length of a cube edge
+ is $a$, the area of a cube face is $a^2$, and the volume of a cube is $a^2$.
+ 
+ \section{Geometric interpretation of fluxes , curls, and currents}
+ 
+ Now the integrals in Maxwell's equations take on simple geometric and
+ algebraic meanings.
+ 
+ The electric flux through a surface, $\Phi_S(\mathbf{E})$ is simply
+ the electric field component $E_i$ on the first grid that pierces a face $S$ on the
+ second grid, times the area of the face $a^2$.
+ For example a face on the +x side of a cube has flux,
+ \begin{equation}
+ \Phi_S(\mathbf{E}) = a^2 E_x,
+ \end{equation}
+ where $E_x$ can be read off an edge of the first grid.
+ 
+ The magnetic flux is defined in a similar manner,
+ \begin{equation}
+ \Phi_S(\mathbf{B}) = a^2 B_x.
+ \end{equation}
+ 
+ The electric curl around a face on the first grid
+ is just the sum of the electric fields circulating around the face
+ times the length of an edge, $a$,
+ \begin{equation}
+ \oint_{\partial S} \mathbf{E}\cdot \mathrm{d}\mathbf{l}
+ = a (E_y + E_z -E_y -E_z)
+ \end{equation}
+ 
+ The magnetic curl is defined in a similar manner,
+ \begin{equation}
+ \oint_{\partial S} \mathbf{B}\cdot \mathrm{d}\mathbf{l}
+ = a (B_y + B_z -B_y -B_z)
+ \end{equation}
+
+Finally, the current $I_S$ through a face $S$ on the second grid
+is just the current density $J_i$ on the edge that pierces that face times
+the area of the face, $a^2$,
+\begin{equation}
+I_S = a^2 J_x.
+\end{equation}
+
+\section{Integrating Maxwell's equations forward in time}
+
+To integrate Maxwell's equations, choose a small time step,
+$\Delta t < a/c$, where $c$ is the speed of light.
+First Faraday's law of induction to advance the magnetic fields,
+\begin{equation}
+B_x^{\text{(new)}}
+=B_x^{\text{(old)}}
+-\frac{\Delta t}{a}
+(E_y + E_z - E_y -E_z)
+\end{equation}
+Then calculate the current densities using $\mathbf{J}=\sigma \mathbf{E}$
+anywhere there is conducting materials.
+Finally update the electric fields using Amp\`ere's law with Maxwell's correction.
+\begin{equation}
+E_x^{\text{(new)}}
+=E_x^{\text{(old)}}
++\frac{c^2 \Delta t}{a}
+(B_y + B_z - B_y -B_z)
+-\frac{\Delta t}{\varepsilon_0} J_x.
+\end{equation}
+Here we have used $\epsilon_0\mu_0=1/c^2$ to simplify the expression a bit.
+\end{document}  
